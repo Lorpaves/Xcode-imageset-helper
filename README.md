@@ -91,15 +91,17 @@ pipenv shell
 ```
 python main.py --help 
 
+Usage: main.py [OPTIONS] [URL]                                                                                                                                                                                                                                                   
+           
 ╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│   file_path      [FILE_PATH]  The URL of the image set, file or folder. [default: None]                                                              │
+│   url      [URL]  The path of the image set, file or folder. [default: None]                                                                         │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ --format                    TEXT     The format of the image set.  Only supports "svg" and "png". Option list: [svg, png, all], when you choose      │
 │                                      "all", means both "svg" and "png". If your path is a folder, you will need to specify the image format that you │
 │                                      want to convert.                                                                                                │
 │                                      [default: all]                                                                                                  │
-│ --size                      INTEGER  The @1x size of the image set in pixel. If is None, will set the size to the size of the original image.  │
+│ --size                      INTEGER  The @1x size of the image set in pixel. If is None, will set the size to the size of the original image.        │
 │                                      [default: None]                                                                                                 │
 │ --install-completion                 Install completion for the current shell.                                                                       │
 │ --show-completion                    Show completion for the current shell, to copy it or customize the installation.                                │

@@ -313,15 +313,15 @@ app = typer.Typer()
 
 @app.command()
 def create(
-    file_path: str = typer.Argument(default=None, help = ' The URL of the image set, file or folder.', show_default=True, allow_dash=True), 
+    url: str = typer.Argument(default=None, help = ' The path of the image set, file or folder.', show_default=True, allow_dash=True), 
     format: str = typer.Option(default='all', help="""The format of the image set.  Only supports "svg" and "png".
                             Option list: [svg, png, all], when you choose "all", means both "svg" and "png".
                             If your path is a folder, you will need to specify the image format that you want to convert."""),
     size: List[int]  = typer.Option(default=None, help='The @1x size of the image set in pixel. If is None, will set the size to the size of the original image.')):
-    if os.path.isdir(file_path):
-        create_imagesets(file_path, parse_format(format), *size)
-    elif os.path.isfile(file_path):
-        create_imageset(file_path, *size)
+    if os.path.isdir(url):
+        create_imagesets(url, parse_format(format), *size)
+    elif os.path.isfile(url):
+        create_imageset(url, *size)
     
 def parse_format(format: str) -> ImageType:
     """Parses the given format string and returns the corresponding ImageType.
