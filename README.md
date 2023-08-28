@@ -144,16 +144,16 @@ python main.py my-folder --format all --size 24
 # main.py
 
 # original image width andh height
-create_images('my-folder')
+create_imagesets('my-folder')
 
 # same width and height
-create_images('my-folder', 100)
+create_imagesets('my-folder', 100)
 
 # different width and height
-create_images('my-folder', 100, 200)
+create_imagesets('my-folder', 100, 200)
 
 # If you pass in multiple parameters, the height and width of the image only take the first and second, for the following example is (100, 200)
-create_images('my-folder', 100, 200, 300, 400)
+create_imagesets('my-folder', 100, 200, 300, 400)
 
 # same as `create_images`
 create_imageset('image.png')
