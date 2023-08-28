@@ -156,7 +156,7 @@ create_imagesets('my-folder', 100, 200)
 # If you pass in multiple parameters, the height and width of the image only take the first and second, for the following example is (100, 200)
 create_imagesets('my-folder', 100, 200, 300, 400)
 
-# same as `create_images`
+# same as `create_imagesets`
 create_imageset('image.png')
 ```
 
