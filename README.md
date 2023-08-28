@@ -54,8 +54,6 @@ python main.py image.png
 
 ### Installing
 
-A step by step series of examples that tell you how to use this tool.
-
 **1. Clone this repository**
 
 ```
