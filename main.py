@@ -4,7 +4,7 @@ import shutil
 from collections import OrderedDict
 import json
 from PIL import Image
-from typing import List, Tuple, Callable, Dict
+from typing import List, Tuple, Dict
 from utils import *
 import typer
 
