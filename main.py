@@ -1,86 +1,151 @@
 import cairosvg
 import os
-import glob
-import re
 import shutil
 from collections import OrderedDict
 import json
 from PIL import Image
+from typing import List, Tuple, Callable, Dict
+from utils import *
+import typer
 
-
-def match_png(png_file):
-    """
-    This function matches a png file and moves it to a folder.
-    Move "./folder/image@1x.png", "./folder/image@2x.png" ... to the folder[./folder/image]
-
-    Parameters:
-    png_file (str): The file name of the png file.
-
+def create_image_folder(image_url: str) -> str:
+    """Creates a folder for storing images.
+    
+    Args:
+        image_url (str): The URL of the image.
+    
     Returns:
-    None
-    """
-    pattern = r"([^@]+)@.*\.png"
-
-    match = re.match(pattern=pattern, string=png_file)
-    if match:
-        name = match.group(1)
-        folder_name = name
-        folder = os.path.join(os.curdir, folder_name)
-        if not os.path.isdir(folder):
-            os.makedirs(folder)
-
-        shutil.move(png_file, folder)
-        print(png_file)
-
-
-def convert_svg(svg_file, width, height):
-    """
-    Converts a svg file to a png file
-    
-    Parameters
-    ----------
-    svg_file : str
-        The svg file to be converted
-    width : int
-        The width of the output png file
-    height : int
-        The height of the output png file
-    
-    Returns
-    -------
-    None
+        str: The path of the created folder.
     """
     
-    file = os.path.splitext(svg_file)[0]
-    for scale in [1, 2, 3]:
-        png_file = file + f"@{scale}" + '.png'
-        cairosvg.svg2png(url=svg_file, write_to=png_file,
-                         output_width=width * scale, output_height=height * scale)
+    dir = image_file_prefix(image_url) + '.imageset'
+    create_folder(dir)
+    return dir
 
 
-def match_scale(of: str) -> int:
+def create_scaled_image_urls(image_url: str) -> List[Dict[str, str]]:
+    """Creates a list of dictionaries containing scaled image URLs.
+    
+    Args:
+        image_url (str): The URL of the original image.
+    
+    Returns:
+        List[Dict[str, str]]: A list of dictionaries, where each dictionary contains the scaled image URL and its corresponding scale factor.
+    
+    Example:
+        >>> create_scaled_image_urls("https://example.com/image.png")
+        [{'url': 'image@1x.png', 'scale': '1'}, {'url': 'image@2x.png', 'scale': '2'}, {'url': 'image@3x.png', 'scale': '3'}]
     """
-    Returns the scale from a string.
+    
+    SCALES = [1, 2, 3]
+    image_name = get_image_name(image_url)
+    return [ {"url": f'{image_name}@{s}x.png', "scale": str(s)} for s in SCALES]
 
-    Parameters
-    ----------
-    of : str
-        The string to parse.
-
-    Returns
-    -------
-    int
-        The scale, or None if not found.
+def get_image_name(image_url: str) -> str:
+    """Get the name of an image from its URL.
+    
+    Args:
+        image_url (str): The URL of the image.
+    
+    Returns:
+        str: The name of the image without the file extension.
+    
+    Example:
+        >>> get_image_name('https://example.com/images/image.jpg')
+        'image'
     """
+    
+    return os.path.splitext(os.path.basename(image_url))[0]
 
-    pattern = r'@(\d+)x'
-    match = re.search(pattern=pattern, string=of)
-    if match:
-        scale = match.group(1)
-        return int(scale)
+def image_file_prefix(image_url: str) -> str:
+    """Return the prefix of an image file.
+    
+    Args:
+        image_url (str): The URL of the image file.
+    
+    Returns:
+        str: The prefix of the image file.
+    
+    Example:
+        >>> image_file_prefix('https://example.com/image.jpg')
+        'https://example.com/image'
+    """
+    
+    return os.path.splitext(image_url)[0]
+
+def resize_image(image: Image.Image, new_size: Tuple[int, int]):
+    """Resizes an image to a new size.
+    
+    Args:
+        image (PIL.Image.Image): The image to be resized.
+        new_size (Tuple[int, int]): The new size of the image.
+    
+    Returns:
+        PIL.Image.Image: The resized image.
+    
+    Example:
+        >>> from PIL import Image
+        >>> image = Image.open('image.jpg')
+        >>> new_size = (800, 600)
+        >>> resized_image = resize_image(image, new_size)
+    """
+    
+    new_img = Image.new('RGBA', new_size)
+    resiezed_image = image.resize(new_size, Image.BICUBIC)
+    new_img.paste(resiezed_image)
+    return new_img
+
+def move_png_image(png_file: str, dest: str):
+    """Moves a PNG image file to a specified destination.
+    
+    Args:
+        png_file (str): The path of the PNG image file to be moved.
+        dest (str): The destination path where the PNG image file will be moved to.
+    
+    Raises:
+        FileNotFoundError: If the source PNG image file does not exist.
+        PermissionError: If the user does not have permission to move the PNG image file.
+    """
+    
+    shutil.move(png_file, dest)
 
 
-def create_image_json(files: [str]) -> [dict]:
+def convert_svg(svg_file: str, *size: int):
+    """Converts an SVG file to PNG images of different sizes.
+    
+    Args:
+        svg_file (str): The path to the SVG file.
+        size (Tuple[int, int]): The desired width and height of the output images.
+    
+    Returns:
+        None
+    
+    Raises:
+        FileNotFoundError: If the SVG file does not exist.
+        OSError: If there is an error creating the image folder or saving the PNG files.
+    
+    Example:
+        convert_svg('path/to/file.svg', (100, 100))
+    """
+    if not size or len(size) == 0:
+        with open(svg_file, 'rb') as i:
+            size = Image.open(i, formats=['SVG']).size
+    elif len(size) == 1:
+        size = (size[0], size[0])
+    file = image_file_prefix(svg_file)
+    dir = create_image_folder(file + '.imageset')
+    for scaled_image_url in create_scaled_image_urls(svg_file):
+        png_file_name = scaled_image_url['url']
+        scale = int(scaled_image_url['scale'])
+        new_size = c_tuple(size) * scale
+        png_file = os.path.join(dir, png_file_name)
+        cairosvg.svg2png(url=svg_file, write_to= png_file, output_width= new_size[0], output_height= new_size[1])
+        print_white(f'  - "{svg_file}" Saved to "{png_file}"')
+    create_json_file(dir)
+    
+
+
+def create_image_json(files: List[str]) -> List[Dict[str, str]]:
     """
     This function takes a list of files and returns a list of dictionaries
     with the filename, idiom and scale for each file.
@@ -94,21 +159,20 @@ def create_image_json(files: [str]) -> [dict]:
 
     files = sorted(files)
     scales = []
-    images = []
+    json_images = []
     for index, file in enumerate(files):
-        scales.append(match_scale(file))
-        images.append({
+        scales.append(index + 1)
+        json_images.append({
             "filename": file.split('/')[-1],
             "idiom": "universal",
             "scale": f"{index + 1}x"
         })
-    images.sort(key=lambda x: float(x['scale'][:-1]))
-    return images
+    json_images.sort(key=lambda x: float(x['scale'][:-1]))
+    return json_images
 
 
 def create_json(dir: str) -> OrderedDict:
-    """
-    This function creates a json file from a directory of images.
+    """This function creates a json file from a directory of images.
 
     Parameters:
     dir (str): The directory of images.
@@ -117,7 +181,8 @@ def create_json(dir: str) -> OrderedDict:
     OrderedDict: A dictionary containing the images and their corresponding information.
     """
 
-    png_files = glob.glob(dir + '/*.png')
+    # png_files = glob.glob(dir + '/*.png')
+    png_files = get_all_files(dir=dir, type=ImageType.PNG)
     images = create_image_json(png_files)
     data = OrderedDict()
     data['images'] = images
@@ -129,108 +194,138 @@ def create_json(dir: str) -> OrderedDict:
 
 
 def create_json_file(folder: str):
+    """Creates a JSON file named 'Contents.json' in the specified folder.
+    
+    Args:
+        folder (str): The path of the folder where the JSON file will be created.
+    
+    Returns:
+        None
+    
+    Raises:
+        FileNotFoundError: If the specified folder does not exist.
+    
+    Example:
+        create_json_file('/path/to/folder')
     """
-    This function creates images from a given folder.
-
-    Parameters
-    ----------
-    folder : string
-        The folder where the images are located.
-
-    Returns
-    -------
-    None
-    """
-
-    with open(folder + '/Contents.json', 'w+') as f:
-        print(folder + '/Contents.json')
+    
+    json_file = folder + '/Contents.json'
+    with open(json_file, 'w+') as f:
         json.dump(create_json(dir=folder), sort_keys=True, fp=f)
-        print(f"done: {folder}")
+        print_white(f"  - Contents.json was created to: {json_file}")
 
 
-def list_dirs(folder: str):
+
+
+def create_images(url: str, *size: int):
+    """Creates scaled images from the given URL and saves them to a specified directory.
+    
+    Args:
+        url (str): The URL of the image file.
+        size (Tuple[int, int] | None, optional): The desired size of the images. If not provided, the original image size will be used. Defaults to None.
+    
+    Returns:
+        None
+    
+    Raises:
+        FileNotFoundError: If the specified URL does not exist.
+    
+    Example:
+        create_images('example.jpg', (800, 600))
     """
-    Get a list of all directories in a given folder.
+    
+    with open(url, 'rb') as i:
+        origin_image = Image.open(i).convert('RGBA')
+        if not size or len(size) == 0:
+            size = origin_image.size
+        elif len(size) == 1:
+            size = (size[0], size[0])
+        dir = create_image_folder(url)
+        scaled_image_urls = create_scaled_image_urls(url)
+        for scaled_image_info in scaled_image_urls:
+            new_size = c_tuple(size) * int(scaled_image_info['scale'])
+            new_image = resize_image(origin_image, (new_size[0], new_size[1]))
+            new_image_url = os.path.join(dir, scaled_image_info['url'])
+            new_image.save(new_image_url, format='PNG')
+            print_white(f'  - "{url}" Saved to "{new_image_url}"')
+        create_json_file(dir)
+      
 
-    Parameters
-    ----------
-    folder : str
-        The path to the folder to search.
 
-    Returns
-    -------
-    list
-        A list of all the directories in the given folder.
+def create_imageset(file: str, *size: int):
+    """Creates an image set based on the given file and size.
+    
+    Args:
+        file (str): The path to the file.
+        size (Tuple[int, int]): The desired size of the image set.
+    
+    Returns:
+        None
+    
+    Raises:
+        ValueError: If the file extension is not supported.
+    
+    Example:
+        create_imageset('path/to/image.png', (100, 100))
     """
-    dir_list = os.listdir(folder)
-    dirs = []
-    for name in dir_list:
-        dir = os.path.join(folder, name)
-        if os.path.isdir(dir):
-            dirs.append(dir)
-    return dirs
 
+    if not (os.path.exists(file) and os.path.isfile(file)):
+        raise FileNotFoundError
+    _, ext = os.path.splitext(file)
+    ext = ext[1:]
 
-def rename_image_folder(folder):
+    if ext == ImageType.PNG.value:
+        create_images(file, *size)
+    elif ext == ImageType.SVG.value:
+        convert_svg(file, *size)
+    else:
+        raise  ImageNotSupportError(message=f'File type is not supported. {ext}')
+        
+def create_imagesets(dir: str, type: ImageType, *size: int):
+    """Create image sets for all files in a directory.
+    
+    Args:
+        dir (str): The directory path where the files are located.
+        type (ImageType): The type of images to include in the image sets.
+        size (Tuple[int, int]): The desired size of the image sets.
+    
+    Returns:
+        None
+    
+    Example:
+        create_imagesets('/path/to/directory', ImageType.PNG, (100, 100))
     """
-    Rename folders that end in .imageset
+    if not (os.path.exists(dir) and os.path.isdir(dir)) :
+        raise FileExistsError
+    print_cyan('Start converting...')
+    all_files = get_all_files(dir=dir, type=type)
+    for index, file in enumerate(all_files):
+        print_white(f'⭕️ Start task for {file}')
+        create_imageset(file, *size)
+        print_green(f'✅({index + 1} / {len(all_files)}) Task completed for image {file}')
+    print_cyan('All tasks done.')
+app = typer.Typer()
 
-    Parameters
-    ----------
-    folder : str
-        Folder name
-
-    Returns
-    -------
-    str
-        Folder name
-    """
-    pattern = r'(.+)-\w+\.imageset'
-    match = re.match(pattern, folder)
-
-    if match:
-        new_name = re.sub(pattern, r'\1.imageset', folder)
-        print(f"Renaming {folder} to {new_name}")
-        return new_name
-
-    return folder
-
-
-def get_all_files(ext: str, dir: str) -> [str]:
-    return glob.glob(f'{dir}/*.{ext}')
-
-
-def resize_image(url: str, size: int = 96 / 3):
-    pattern = r'(.+).png'
-    match = re.match(pattern, url)
-    if match:
-        scales = [1, 2, 3]
-        with open(url, 'rb') as i:
-            origin_image = Image.open(i).convert('RGBA')
-
-            image_file_name = match.group(1)
-            image_folder = image_file_name + '.imageset'
-            image_name = url.split('/')[-1].split('.')[0]
-            create_folder(image_folder)
-            for scale in scales:
-                new_size = (int(size * scale), int(size * scale))
-                new_img = Image.new('RGBA', new_size)
-                resiezed_image = origin_image.resize(new_size, Image.BICUBIC)
-                dest = image_folder + '/' + image_name + f'@{scale}.png'
-                new_img.paste(resiezed_image)
-                new_img.save(dest, format='PNG')
-                print(f"{url} Saved to {dest}")
-
-
-def create_folder(folder: str):
-    if not os.path.isdir(folder):
-        os.makedirs(folder)
-
+@app.command()
+def create(
+    file_path: str = typer.Argument(default=None, help = ' The URL of the image set, file or folder.', show_default=True, allow_dash=True), 
+    format: str = typer.Option(default='all', help="""The format of the image set.  Only supports "svg" and "png".
+                            Option list: [svg, png, all], when you choose "all", means both "svg" and "png".
+                            If your path is a folder, you will need to specify the image format that you want to convert."""),
+    size: List[int]  = typer.Option(default=None, help='The scale @1x size of the image set in pixel. If is None, will set the size to the size of the original image.')):
+    if os.path.isdir(file_path):
+        create_imagesets(file_path, parse_format(format), *size)
+    elif os.path.isfile(file_path):
+        create_imageset(file_path, *size)
+    
+def parse_format(format: str) -> ImageType:
+    if format == 'all':
+        return ImageType.All
+    if format == ' png':
+        return ImageType.PNG
+    if format == 'svg':
+        return ImageType.SVG
+    return ImageType.PNG
 
 if __name__ == '__main__':
-    dir = './source'
-    png_images = glob.glob(f"{dir}/*.png")
-    for image in png_images:
-        image_folders = dir + '/' + \
-            image.split('/')[-1].split('.')[0] + '.imageset'
-        create_json_file(folder=image_folders)
+    app()
