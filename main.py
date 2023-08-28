@@ -218,11 +218,11 @@ def create_json_file(folder: str):
 
 
 def create_images(url: str, *size: int):
-    """Creates scaled images from the given URL and saves them to a specified directory.
+    """Creates scaled images from the given URL.
     
     Args:
         url (str): The URL of the image file.
-        size (Tuple[int, int] | None, optional): The desired size of the images. If not provided, the original image size will be used. Defaults to None.
+        *size (int): Variable length argument representing the desired size of the scaled images. If no size is provided, the original image size is used. If only one size is provided, the scaled images will have equal width and height.
     
     Returns:
         None
@@ -231,7 +231,7 @@ def create_images(url: str, *size: int):
         FileNotFoundError: If the specified URL does not exist.
     
     Example:
-        create_images('example.jpg', (800, 600))
+        create_images('my-folder', 100, 200, 300)
     """
     
     with open(url, 'rb') as i:
@@ -253,21 +253,20 @@ def create_images(url: str, *size: int):
 
 
 def create_imageset(file: str, *size: int):
-    """Creates an image set based on the given file and size.
+    """Create an image set based on the given file and sizes.
     
     Args:
         file (str): The path to the file.
-        size (Tuple[int, int]): The desired size of the image set.
-    
-    Returns:
-        None
+        *size (int): Variable length argument representing the sizes of the images.
     
     Raises:
-        ValueError: If the file extension is not supported.
+        FileNotFoundError: If the file does not exist or is not a regular file.
+        ImageNotSupportError: If the file type is not supported.
     
     Example:
-        create_imageset('path/to/image.png', (100, 100))
+        create_imageset('image.png', 100, 200, 300)
     """
+    
 
     if not (os.path.exists(file) and os.path.isfile(file)):
         raise FileNotFoundError
@@ -282,19 +281,23 @@ def create_imageset(file: str, *size: int):
         raise  ImageNotSupportError(message=f'File type is not supported. {ext}')
         
 def create_imagesets(dir: str, type: ImageType, *size: int):
-    """Create image sets for all files in a directory.
+    """Creates image sets for all files in a given directory.
     
     Args:
         dir (str): The directory path where the files are located.
-        type (ImageType): The type of images to include in the image sets.
-        size (Tuple[int, int]): The desired size of the image sets.
+        type (ImageType): The type of image files to include in the image sets.
+        *size (int): Variable length argument representing the sizes of the image sets.
+    
+    Raises:
+        FileExistsError: If the directory does not exist or is not a directory.
     
     Returns:
         None
     
     Example:
-        create_imagesets('/path/to/directory', ImageType.PNG, (100, 100))
+        create_imagesets('/path/to/directory', ImageType.PNG, 100, 200, 300)
     """
+    
     if not (os.path.exists(dir) and os.path.isdir(dir)) :
         raise FileExistsError
     print_cyan('Start converting...')
@@ -304,6 +307,8 @@ def create_imagesets(dir: str, type: ImageType, *size: int):
         create_imageset(file, *size)
         print_green(f'✅({index + 1} / {len(all_files)}) Task completed for image {file}')
     print_cyan('All tasks done.')
+
+
 app = typer.Typer()
 
 @app.command()
@@ -319,6 +324,15 @@ def create(
         create_imageset(file_path, *size)
     
 def parse_format(format: str) -> ImageType:
+    """Parses the given format string and returns the corresponding ImageType.
+    
+    Args:
+        format (str): The format string to be parsed.
+    
+    Returns:
+        ImageType: The corresponding ImageType based on the format string.
+    """
+    
     if format == 'all':
         return ImageType.All
     if format == ' png':
