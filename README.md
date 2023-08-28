@@ -44,6 +44,7 @@ python main.py image.png
 |    |—— image@1x.png
 |    |—— image@2x.png
 |    |—— image@3x.png
+|    |—— Contents.json
 ```
 
 ### Prerequisites
