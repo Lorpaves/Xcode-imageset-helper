@@ -137,7 +137,7 @@ python main.py my-folder --format all --size 24
 |—— ImageType.py # Enum : Image type for converting original image. 
 |—— c_tuple.py  # Tuple: For tuple calculation. c_tuple(1, 2) * 2 = (2, 4)
 |—— file_helper.py  # A list of functions for file handling
-|—— printer.py  # colorful text output
+|—— printer.py  # colorize text output
 ```
 
 ```bash
