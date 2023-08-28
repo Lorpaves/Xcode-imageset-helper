@@ -78,6 +78,8 @@ cd Xcode-imageset-helper
 
 pip install pipenv
 
+pipenv --python 3.11
+
 pipenv install
 
 pipenv shell
