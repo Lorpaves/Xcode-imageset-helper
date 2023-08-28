@@ -98,7 +98,7 @@ python main.py --help
 │                                      "all", means both "svg" and "png". If your path is a folder, you will need to specify the image format that you │
 │                                      want to convert.                                                                                                │
 │                                      [default: all]                                                                                                  │
-│ --size                      INTEGER  The scale @1x size of the image set in pixel. If is None, will set the size to the size of the original image.  │
+│ --size                      INTEGER  The @1x size of the image set in pixel. If is None, will set the size to the size of the original image.  │
 │                                      [default: None]                                                                                                 │
 │ --install-completion                 Install completion for the current shell.                                                                       │
 │ --show-completion                    Show completion for the current shell, to copy it or customize the installation.                                │

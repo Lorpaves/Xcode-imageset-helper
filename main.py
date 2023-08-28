@@ -317,7 +317,7 @@ def create(
     format: str = typer.Option(default='all', help="""The format of the image set.  Only supports "svg" and "png".
                             Option list: [svg, png, all], when you choose "all", means both "svg" and "png".
                             If your path is a folder, you will need to specify the image format that you want to convert."""),
-    size: List[int]  = typer.Option(default=None, help='The scale @1x size of the image set in pixel. If is None, will set the size to the size of the original image.')):
+    size: List[int]  = typer.Option(default=None, help='The @1x size of the image set in pixel. If is None, will set the size to the size of the original image.')):
     if os.path.isdir(file_path):
         create_imagesets(file_path, parse_format(format), *size)
     elif os.path.isfile(file_path):
